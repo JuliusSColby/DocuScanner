@@ -6,9 +6,13 @@ from PIL import Image
 
 pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tesseract'
 
-og = cv2.imread("test7.jpg")
-img = cv2.resize(og, (768, 1024))
+#either input file name (without extension) via prompt or hard code it
+#img_name = "test6"
+img_name = input("Enter path/name of file: ")
 
+og = cv2.imread(img_name + ".jpg")
+
+img = cv2.resize(og, (768, 1024))
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 blurred = cv2.GaussianBlur(gray, (0,0), 3)
@@ -27,24 +31,23 @@ cv2.drawContours(output, [approx], -1, (0, 255, 0), 3)
 
 x, y, w, h = cv2.boundingRect(document_contour) 
 cropped_image = img[y:y+h, x:x+w] 
-cv2.imwrite("cropped_document.jpg", cropped_image) 
+cv2.imwrite(img_name + "_cropped.jpg", cropped_image) 
 
 #PART 2: TEXT EXTRACTION
 
 #CROPPING
-image_path = "cropped_document.jpg"
+image_path = img_name + "_cropped.jpg"
 image = Image.open(image_path)
 
 width, height = image.size
 
-# Calculate the crop margins (5% of width and height)
 crop_margin_width = int(width * 0.10)
 crop_margin_height = int(height * 0.10)
 crop_box = (crop_margin_width, crop_margin_height, width - crop_margin_width, height - crop_margin_height)
 cropped_final = image.crop(crop_box)
-cropped_final.save("cropped_final.jpg")
+cropped_final.save(image_path)
 
-cf = cv2.imread("cropped_final.jpg")
+cf = cv2.imread(image_path)
 gray2 = cv2.cvtColor(cf, cv2.COLOR_BGR2GRAY)
 _, thresh2 = cv2.threshold(gray2, 75, 255, cv2.THRESH_BINARY_INV)
 contours2, _ = cv2.findContours(thresh2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -64,10 +67,9 @@ y_max = min(y_max + padding, cf.shape[0])
 cv2.rectangle(gray2, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
 cropped = gray2[y_min:y_max, x_min:x_max]
     
-file = open("recognized.txt", "a")
+file = open(img_name + "_recognized.txt", "w")
 
 scale_factor = 1
-#_, enhanced = cv2.threshold(cropped, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 enhanced = cv2.resize(cropped, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
 text = pytesseract.image_to_string(enhanced)
 
